@@ -1,0 +1,1146 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="인강 강의구성 표를 붙여넣어 날짜별로 나누고, 수강 체크·할 일·복습 노트를 관리하는 플래너">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="인강 플래너">
+<meta name="theme-color" content="#f2f4f6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#12171c" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<style>
+:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0;font-size:14px;font-family:system-ui,sans-serif}
+img{max-width:100%}
+[hidden]{display:none!important}
+</style>
+<title>인강 진도 플래너</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@700&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: 월간 달력(좌) + 선택한 날의 강의·할 일 패널(우), 아래에 강좌별 진도 장부 */
+:root{
+  --bg:#f2f4f6; --surface:#ffffff; --sunk:#e8ecf0; --fg:#18222c; --muted:#5d6b78; --line:#d5dce3;
+  --accent:#1d4f7a; --accent-ink:#ffffff; --accent-soft:#dde8f2;
+  --late:#b4372b; --late-soft:#f7e1de; --ok:#2f7a4a;
+  --c1:#1d4f7a; --c2:#a0522d; --c3:#2f7a4a; --c4:#7a3e8c; --c5:#8a6d12; --c6:#2b6f78;
+  --f-display:"Gowun Batang","Nanum Myeongjo",serif;
+  --f-body:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#12171c; --surface:#1a2129; --sunk:#222b35; --fg:#e4e9ee; --muted:#93a1ae; --line:#2e3944;
+  --accent:#7fb2dd; --accent-ink:#0e1a25; --accent-soft:#1f3346;
+  --late:#f08a7e; --late-soft:#3a2220; --ok:#7cc994;
+  --c1:#7fb2dd; --c2:#e0a07a; --c3:#7cc994; --c4:#c79be0; --c5:#d9bd5f; --c6:#6fc2cc;
+  color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#12171c; --surface:#1a2129; --sunk:#222b35; --fg:#e4e9ee; --muted:#93a1ae; --line:#2e3944;
+  --accent:#7fb2dd; --accent-ink:#0e1a25; --accent-soft:#1f3346;
+  --late:#f08a7e; --late-soft:#3a2220; --ok:#7cc994;
+  --c1:#7fb2dd; --c2:#e0a07a; --c3:#7cc994; --c4:#c79be0; --c5:#d9bd5f; --c6:#6fc2cc;
+  color-scheme:dark }
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:14px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 48px}
+.wrap{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+h1,h2,h3{margin:0;text-wrap:balance}
+h1{font-family:var(--f-display);font-size:26px;letter-spacing:-.01em}
+h2{font-size:15px;font-weight:600}
+.num{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}
+button,input,textarea,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:7px 12px;font-weight:500}
+.btn:hover{background:var(--sunk)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn.danger{color:var(--late)}
+.btn.sm{padding:4px 9px;font-size:13px}
+.icon-btn{border:0;background:none;padding:6px 8px;border-radius:6px;color:var(--muted)}
+.icon-btn:hover{background:var(--sunk);color:var(--fg)}
+input[type=text],input[type=url],input[type=number],input[type=date],textarea{
+  width:100%;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:8px 10px}
+textarea{resize:vertical;min-height:120px;font-family:var(--f-mono);font-size:12.5px;line-height:1.55}
+label.f{display:flex;flex-direction:column;gap:5px;font-size:13px;font-weight:500;min-width:0}
+label.f>span{color:var(--muted)}
+
+header.top{display:flex;align-items:end;justify-content:space-between;gap:12px;flex-wrap:wrap}
+header.top .sub{font-size:13px;color:var(--muted);margin-top:2px}
+.save-state{font-size:12px;color:var(--muted)}
+
+.main{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:20px;align-items:start}
+@media (max-width:900px){.main{grid-template-columns:minmax(0,1fr)}}
+
+/* calendar */
+.cal{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.cal-head{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--line);gap:8px}
+.cal-head .month{font-family:var(--f-display);font-size:20px}
+.cal-head .nav{display:flex;gap:4px;align-items:center}
+.dow,.grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr))}
+.dow div{font-size:12px;color:var(--muted);text-align:center;padding:6px 0;letter-spacing:.04em}
+.dow div:first-child{color:var(--late)}
+.grid{border-top:1px solid var(--line)}
+.cell{min-height:96px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);padding:5px 5px 6px;
+  text-align:left;background:none;border-top:0;border-left:0;display:flex;flex-direction:column;gap:3px;min-width:0}
+.cell:nth-child(7n){border-right:0}
+.cell:hover{background:var(--sunk)}
+.cell.other{opacity:.42}
+.cell.sel{background:var(--accent-soft)}
+.cell .d{display:flex;align-items:center;justify-content:space-between;font-size:12.5px;font-weight:500}
+.cell .d .n{width:22px;height:22px;display:grid;place-items:center;border-radius:50%}
+.cell.today .d .n{background:var(--accent);color:var(--accent-ink)}
+.cell.sun .d .n{color:var(--late)} .cell.today.sun .d .n{color:var(--accent-ink)}
+.cell .todo-badge{font-size:11px;color:var(--muted)}
+.lec{display:flex;align-items:center;gap:4px;font-size:11.5px;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  border-left:3px solid var(--cc);padding:1px 0 1px 5px;border-radius:2px;background:color-mix(in srgb,var(--cc) 11%,transparent)}
+.lec span{overflow:hidden;text-overflow:ellipsis}
+.lec.done{opacity:.55;text-decoration:line-through}
+.lec.late{background:var(--late-soft)}
+.more{font-size:11px;color:var(--muted);padding-left:6px}
+.dots{display:none;gap:3px;flex-wrap:wrap}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--cc)}
+.dot.done{background:transparent;border:1.5px solid var(--cc)}
+@media (max-width:640px){
+  .cell{min-height:58px;padding:3px}
+  .cell .lec,.cell .more{display:none}
+  .cell .dots{display:flex}
+  .cell .todo-badge{display:none}
+}
+
+/* day panel */
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);display:flex;flex-direction:column}
+.panel>section{padding:14px 16px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:10px}
+.panel>section:last-child{border-bottom:0}
+.day-title{font-family:var(--f-display);font-size:21px}
+.day-meta{font-size:12.5px;color:var(--muted)}
+.row-h{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.check-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
+.check-list li{display:flex;align-items:flex-start;gap:9px;padding:6px 4px;border-radius:6px}
+.check-list li:hover{background:var(--sunk)}
+.check-list input[type=checkbox]{width:17px;height:17px;margin-top:2px;accent-color:var(--accent);flex:none}
+.check-list .t{flex:1;min-width:0}
+.check-list .t .ttl{overflow-wrap:anywhere}
+.check-list .t .sub{font-size:12px;color:var(--muted)}
+.check-list li.done .ttl{text-decoration:line-through;color:var(--muted)}
+.chip{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;padding:1px 7px;border-radius:99px;background:color-mix(in srgb,var(--cc) 15%,transparent);color:var(--fg)}
+.chip::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--cc)}
+.chip.late{background:var(--late-soft);color:var(--late)}
+.chip.late::before{background:var(--late)}
+.empty-note{font-size:13px;color:var(--muted);padding:4px 0}
+.check-list li{flex-wrap:wrap}
+.note-btn{font-size:12px;border:1px solid var(--line);background:var(--surface);border-radius:6px;padding:2px 8px;color:var(--muted);flex:none;margin-top:1px}
+.note-btn:hover{color:var(--fg);background:var(--sunk)}
+.note-btn.has{color:var(--accent);border-color:color-mix(in srgb,var(--accent) 45%,var(--line))}
+.note-btn[aria-expanded=true]{background:var(--accent-soft);color:var(--fg)}
+.note-box{flex-basis:100%;padding:4px 0 4px 26px;display:flex;flex-direction:column;gap:8px}
+.note-box textarea{min-height:84px;font-family:var(--f-body);font-size:13px;line-height:1.6}
+.note-box .lbl{font-size:12px;color:var(--muted)}
+.note-hist{display:flex;flex-direction:column;gap:6px;font-size:12.5px}
+.note-hist div{border-left:2px solid var(--line);padding-left:9px;white-space:pre-wrap;overflow-wrap:anywhere}
+.note-hist b{display:block;font-size:11.5px;color:var(--muted);font-weight:500}
+select.pick{width:100%;border:1px dashed var(--line);background:var(--surface);border-radius:8px;padding:7px 9px;font-size:13px;color:var(--muted)}
+.notes-all{display:flex;flex-direction:column;gap:14px;max-height:62vh;overflow:auto}
+.notes-all section{display:flex;flex-direction:column;gap:6px}
+.notes-all h3{font-size:13.5px;font-weight:600;overflow-wrap:anywhere}
+.todo-add{display:flex;gap:6px}
+.todo-add input{flex:1}
+.late-box{border:1px solid color-mix(in srgb,var(--late) 40%,var(--line));background:var(--late-soft);border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+.late-box b{color:var(--late)}
+
+/* courses */
+.courses{display:flex;flex-direction:column;gap:10px}
+.course-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+.course{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;display:flex;flex-direction:column;gap:10px;border-top:3px solid var(--cc);min-width:0}
+.course .name{font-weight:600;overflow-wrap:anywhere}
+.course .src{font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.course .src a{color:inherit}
+.bar{height:8px;background:var(--sunk);border-radius:99px;overflow:hidden;position:relative}
+.bar i{position:absolute;inset:0 auto 0 0;background:var(--cc);border-radius:99px}
+.bar b{position:absolute;top:0;bottom:0;width:2px;background:var(--fg);opacity:.5}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;font-size:12px;color:var(--muted)}
+.stats strong{display:block;font-size:15px;color:var(--fg);font-family:var(--f-mono);font-weight:500}
+.course .acts{display:flex;gap:6px;flex-wrap:wrap}
+.empty-courses{background:var(--surface);border:1px dashed var(--line);border-radius:var(--r);padding:28px 20px;display:flex;flex-direction:column;align-items:flex-start;gap:10px}
+.empty-courses p{margin:0;max-width:60ch;color:var(--muted)}
+
+/* sheet */
+.overlay{position:fixed;inset:0;background:color-mix(in srgb,#000 45%,transparent);display:flex;align-items:flex-start;justify-content:center;z-index:50;overflow:auto;
+  padding:max(24px,env(safe-area-inset-top,0px)) max(12px,env(safe-area-inset-right,0px)) 24px max(12px,env(safe-area-inset-left,0px))}
+.sheet{background:var(--surface);border-radius:12px;width:min(640px,100%);display:flex;flex-direction:column;border:1px solid var(--line)}
+.sheet header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--line)}
+.sheet header h2{font-family:var(--f-display);font-size:19px}
+.sheet .body{padding:16px 18px;display:flex;flex-direction:column;gap:14px}
+.sheet footer{padding:12px 18px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap}
+.two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media (max-width:520px){.two{grid-template-columns:minmax(0,1fr)}}
+.url-row{display:flex;gap:6px}
+.url-row input{flex:1;min-width:0}
+.hint{font-size:12.5px;color:var(--muted);background:var(--sunk);border-radius:8px;padding:9px 11px;line-height:1.55}
+.hint.warn{background:var(--late-soft);color:var(--fg)}
+.hint.good{background:color-mix(in srgb,var(--ok) 14%,transparent);color:var(--fg)}
+.week{display:flex;gap:5px;flex-wrap:wrap}
+.week label{position:relative}
+.week input{position:absolute;opacity:0;pointer-events:none}
+.week span{display:grid;place-items:center;width:36px;height:34px;border:1px solid var(--line);border-radius:8px;font-size:13px;cursor:pointer}
+.week input:checked+span{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.week input:focus-visible+span{outline:2px solid var(--accent);outline-offset:2px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{border:0;background:none;padding:6px 12px;font-size:13px}
+.seg button[aria-pressed=true]{background:var(--accent);color:var(--accent-ink)}
+.preview{max-height:180px;overflow:auto;border:1px solid var(--line);border-radius:8px}
+.preview table{width:100%;border-collapse:collapse;font-size:12.5px}
+.preview td{padding:4px 8px;border-bottom:1px solid var(--line)}
+.preview td:first-child,.preview td:last-child{white-space:nowrap;color:var(--muted);font-family:var(--f-mono)}
+.preview td:last-child{text-align:right}
+.dday-bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.dday{display:inline-flex;align-items:baseline;gap:8px;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:6px 12px;cursor:pointer}
+.dday:hover{background:var(--sunk)}
+.dday .nm{font-size:13px;color:var(--muted)}
+.dday .cnt{font-family:var(--f-mono);font-size:17px;font-weight:500;color:var(--accent)}
+.dday.soon .cnt{color:var(--late)}
+.dday.past{opacity:.6}
+.dday-add{border:1px dashed var(--line);background:none;border-radius:8px;padding:7px 12px;color:var(--muted);font-size:13px}
+.dday-add:hover{background:var(--sunk);color:var(--fg)}
+.dd-mark{font-size:11px;font-weight:600;color:var(--late);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cell.has-dd{box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--late) 55%,transparent)}
+.dd-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px}
+.dd-list li{display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid var(--line);border-radius:8px}
+.dd-list li .t{flex:1;min-width:0;overflow-wrap:anywhere}
+.dd-list li .c{font-family:var(--f-mono);color:var(--accent)}
+.dd-form{display:grid;grid-template-columns:minmax(0,1fr) 160px auto;gap:8px;align-items:end}
+@media (max-width:520px){.dd-form{grid-template-columns:minmax(0,1fr)}}
+.warn-line{font-size:12px;color:var(--late)}
+.notion-row{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:12px;border-top:1px dashed var(--line);padding-top:9px}
+.notion-row>span:first-child{min-width:0;flex:1 1 160px}
+.notion-acts{display:flex;align-items:center;gap:8px}
+.notion-acts a{color:var(--accent)}
+.btn:disabled{opacity:.55;cursor:default}
+@media (max-width:640px){.cell .dd-mark{font-size:0;height:4px;background:var(--late);border-radius:2px}}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--bg);padding:8px 14px;border-radius:8px;font-size:13px;z-index:60}
+@media (prefers-reduced-motion:no-preference){.cell,.btn{transition:background .12s}}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>인강 진도 플래너</h1>
+      <div class="sub">강의구성 표를 붙여넣어 날짜별로 나눠 담고, 들은 강의와 그날 할 일을 체크해요.</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <span class="save-state" id="saveState"></span>
+      <span id="backupBox" hidden style="display:inline-flex;gap:6px">
+        <button class="btn sm" type="button" id="backupBtn">기록 백업</button>
+        <label class="btn sm" for="restoreFile" style="cursor:pointer">불러오기</label>
+        <input type="file" id="restoreFile" accept="application/json,.json" hidden>
+      </span>
+      <button class="btn primary" id="addCourseBtn">+ 강좌 추가</button>
+    </div>
+  </header>
+
+  <div class="dday-bar" id="ddayBar"></div>
+
+  <div class="main">
+    <div class="cal">
+      <div class="cal-head">
+        <div class="month" id="monthLabel"></div>
+        <div class="nav">
+          <button class="icon-btn" id="prevM" aria-label="이전 달">◀</button>
+          <button class="btn sm" id="todayBtn">오늘</button>
+          <button class="icon-btn" id="nextM" aria-label="다음 달">▶</button>
+        </div>
+      </div>
+      <div class="dow"><div>일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div>토</div></div>
+      <div class="grid" id="grid"></div>
+    </div>
+
+    <aside class="panel" id="panel">
+      <section>
+        <div>
+          <div class="day-title" id="dayTitle"></div>
+          <div class="day-meta" id="dayMeta"></div>
+        </div>
+        <div id="lateBox"></div>
+      </section>
+      <section>
+        <div class="row-h"><h2>이 날의 강의</h2><span class="muted num" id="lecCount" style="font-size:12px"></span></div>
+        <ul class="check-list" id="dayLecs"></ul>
+        <div id="pickWrap"></div>
+      </section>
+      <section>
+        <div class="row-h"><h2>할 일</h2><span class="muted num" id="todoCount" style="font-size:12px"></span></div>
+        <ul class="check-list" id="dayTodos"></ul>
+        <form class="todo-add" id="todoForm">
+          <input type="text" id="todoInput" placeholder="예: 특별형법 교재 2~37쪽 복습" autocomplete="off">
+          <button class="btn" type="submit">추가</button>
+        </form>
+      </section>
+    </aside>
+  </div>
+
+  <section class="courses">
+    <div class="row-h" style="flex-wrap:wrap"><h2>강좌별 진도</h2><div id="notionStatus" class="notion-acts" style="font-size:12.5px"></div></div>
+    <div id="courseList"></div>
+  </section>
+</div>
+
+<div class="overlay" id="sheetWrap" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+    <header><h2 id="sheetTitle">강좌 추가</h2><button class="icon-btn" id="sheetClose" aria-label="닫기">✕</button></header>
+    <div class="body">
+      <div class="hint" id="pasteGuide">
+        <b>목차 붙여넣는 법</b><br>
+        강의 페이지의 <b>강의구성</b> 표에서 첫 강의부터 마지막 강의까지 드래그해 복사(Ctrl+C / ⌘C)한 뒤, 아래 칸에 붙여넣으세요(Ctrl+V / ⌘V). 표 머리글이나 '맛보기', '첨부파일' 같은 글자가 섞여 들어가도 괜찮아요.
+      </div>
+      <label class="f"><span>강의 목차</span>
+        <textarea id="fToc" placeholder="여기에 붙여넣기&#10;&#10;예)&#10;1	[1-1] 도로 · 교통 (2~13)	62분&#10;2	[1-2] 도로 · 교통 (14~26)	61분&#10;3	[1-3] 도로 · 교통 (27~37)	34분"></textarea>
+      </label>
+      <div id="tocPreview"></div>
+      <div class="two">
+        <label class="f"><span>강좌명</span><input type="text" id="fTitle" placeholder="[T.O.P 형사법] 2026 특별형법 특강"></label>
+        <label class="f"><span>달력에 표시할 짧은 이름</span><input type="text" id="fShort" placeholder="특별형법"></label>
+      </div>
+      <div class="two">
+        <label class="f"><span>시작일</span><input type="date" id="fStart"></label>
+        <div class="f" style="display:flex;flex-direction:column;gap:5px;font-size:13px;font-weight:500">
+          <span class="muted">하루 분량</span>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <div class="seg" role="group" aria-label="분량 기준">
+              <button type="button" id="mCount" aria-pressed="true">강의 수</button>
+              <button type="button" id="mMin" aria-pressed="false">시간(분)</button>
+            </div>
+            <input type="number" id="fPer" min="1" style="width:84px" value="2">
+            <span class="muted" id="perUnit">강</span>
+          </div>
+        </div>
+      </div>
+      <div class="f" style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:500">
+        <span class="muted">수강하는 요일</span>
+        <div class="week" id="fDays"></div>
+      </div>
+      <div id="planHint"></div>
+    </div>
+    <footer>
+      <button class="btn" type="button" id="sheetCancel">취소</button>
+      <button class="btn primary" type="button" id="sheetSave">달력에 배분하기</button>
+    </footer>
+  </div>
+</div>
+
+<div class="overlay" id="ddWrap" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="ddTitle" style="width:min(520px,100%)">
+    <header><h2 id="ddTitle">D-day 관리</h2><button class="icon-btn" id="ddClose" aria-label="닫기">✕</button></header>
+    <div class="body">
+      <ul class="dd-list" id="ddList"></ul>
+      <form class="dd-form" id="ddForm">
+        <label class="f"><span>이름</span><input type="text" id="ddName" placeholder="예: 변호사시험, 형사법 기말고사" autocomplete="off"></label>
+        <label class="f"><span>날짜</span><input type="date" id="ddDate"></label>
+        <button class="btn primary" type="submit">추가</button>
+      </form>
+      <div class="hint">추가한 D-day는 상단에 남은 일수로 표시되고, 달력에도 빨간 테두리로 표시돼요. 강좌 완강 예정일이 가장 가까운 D-day보다 늦으면 강좌 카드에 알려 드려요.</div>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="notesWrap" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="notesTitle">
+    <header><h2 id="notesTitle">복습 노트</h2><button class="icon-btn" id="notesClose" aria-label="닫기">✕</button></header>
+    <div class="body"><div class="notes-all" id="notesAll"></div></div>
+    <footer id="notesFoot" style="align-items:center"></footer>
+  </div>
+</div>
+
+<div class="overlay" id="confirmWrap" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="confirmTitle" style="width:min(420px,100%)">
+    <header><h2 id="confirmTitle">확인</h2></header>
+    <div class="body"><p id="confirmMsg" style="margin:0"></p></div>
+    <footer>
+      <button class="btn" type="button" id="confirmNo">취소</button>
+      <button class="btn primary" type="button" id="confirmYes">확인</button>
+    </footer>
+  </div>
+</div>
+
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(() => {
+  // ---------- date helpers ----------
+  const pad = n => String(n).padStart(2, "0");
+  const ymd = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  const parse = s => { const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d); };
+  const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
+  const todayStr = () => ymd(new Date());
+  const DOW = ["일", "월", "화", "수", "목", "금", "토"];
+  const fmtLong = s => { const d = parse(s); return `${d.getMonth() + 1}월 ${d.getDate()}일 (${DOW[d.getDay()]})`; };
+  const fmtShort = s => { const d = parse(s); return `${d.getMonth() + 1}.${d.getDate()}`; };
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const uid = () => Math.random().toString(36).slice(2, 10);
+
+  // ---------- state ----------
+  let state = { courses: [], done: {}, todos: {}, ddays: [], notes: {} };
+  let viewMonth = new Date(); viewMonth.setDate(1);
+  let selected = todayStr();
+  let db = null, me = null, docRef = null;
+
+  // ---------- TOC parsing ----------
+  function parseToc(text) {
+    const out = [];
+    for (let raw of text.split(/\r?\n/)) {
+      let line = raw.trim();
+      if (!line) continue;
+      if (/^\|?\s*-{2,}/.test(line)) continue;
+      line = line.replace(/^\|/, "").replace(/\|$/, "").replace(/\s*\|\s*/g, "\t");
+      if (/^(순서|번호|회차)\s/.test(line) || /강의명/.test(line) && /강의시간/.test(line)) continue;
+      let min = 0;
+      const mm = line.match(/(\d{1,3})\s*분(?!\S*\d)/);
+      const hm = line.match(/(\d{1,2}):(\d{2})(?::(\d{2}))?\s*$/);
+      if (mm) { min = +mm[1]; line = line.slice(0, mm.index) + line.slice(mm.index + mm[0].length); }
+      else if (hm) { min = hm[3] ? (+hm[1]) * 60 + (+hm[2]) : +hm[1]; line = line.slice(0, hm.index); }
+      line = line.replace(/^\s*(\d{1,3})(강|회)?[\s.\t)]+/, "");
+      line = line.split("\t").map(s => s.trim()).filter(Boolean).filter(s => !/^(맛보기|play|PDF|PDF ?파일|다운로드|첨부파일|대표맛보기)$/i.test(s)).join(" ").replace(/\s+(play|PDF ?파일)$/i, "").split("\t").join(" ").trim();
+      if (!line) continue;
+      out.push({ title: line, min });
+    }
+    return out;
+  }
+  const shortName = t => (t || "").replace(/\[[^\]]*\]/g, "").replace(/20\d\d/g, "").replace(/\s+/g, " ").trim() || t;
+
+  // ---------- scheduling ----------
+  function plan(course, fromStr) {
+    const done = state.done[course.id] || {};
+    const sched = Array.isArray(course.sched) ? course.sched.slice() : [];
+    const days = course.days && course.days.length ? course.days : [0, 1, 2, 3, 4, 5, 6];
+    let d = parse(fromStr), used = 0, count = 0, guard = 0;
+    for (let i = 0; i < course.lectures.length; i++) {
+      if (done[i]) continue;
+      const min = course.lectures[i].min || 0;
+      while (guard++ < 5000) {
+        if (!days.includes(d.getDay())) { d = addDays(d, 1); used = 0; count = 0; continue; }
+        const fits = course.mode === "min"
+          ? (count === 0 || used + min <= course.per)
+          : count < course.per;
+        if (fits) break;
+        d = addDays(d, 1); used = 0; count = 0;
+      }
+      sched[i] = ymd(d); used += min; count++;
+    }
+    return sched;
+  }
+  const isDone = (c, i) => !!(state.done[c.id] && state.done[c.id][i]);
+  function lecturesOn(dateStr) {
+    const out = [];
+    state.courses.forEach((c, ci) => c.lectures.forEach((l, i) => { if (c.sched[i] === dateStr) out.push({ c, ci, i, l }); }));
+    return out;
+  }
+  function lateLectures() {
+    const t = todayStr(), out = [];
+    state.courses.forEach((c, ci) => c.lectures.forEach((l, i) => { if (c.sched[i] && c.sched[i] < t && !isDone(c, i)) out.push({ c, ci, i, l }); }));
+    return out;
+  }
+  const colorOf = ci => `var(--c${(state.courses[ci]?.color ?? ci) % 6 + 1})`;
+
+  // ---------- persistence ----------
+  const LS = "lecture-planner-v1";
+  let saveTimer = null, saving = false, dirty = false;
+  function setSaveState(t) { document.getElementById("saveState").textContent = t; }
+  function save() {
+    dirty = true;
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(flush, 500);
+  }
+  async function flush() {
+    if (saving) { saveTimer = setTimeout(flush, 300); return; }
+    saving = true; dirty = false;
+    const body = JSON.parse(JSON.stringify(state));
+    try { localStorage.setItem(LS, JSON.stringify(body)); } catch {}
+    if (docRef) {
+      setSaveState("저장 중…");
+      try { await docRef.set({ v: 1, data: body }); setSaveState("저장됨"); }
+      catch (e) { setSaveState(e && e.code === "quota_exceeded" ? "저장 공간이 가득 찼어요" : "저장 실패 · 이 기기에만 보관 중"); }
+    } else {
+      setSaveState("이 브라우저에 저장됨");
+    }
+    saving = false;
+  }
+  function loadLocal() {
+    try { const s = localStorage.getItem(LS); if (s) state = normalize(JSON.parse(s)); } catch {}
+  }
+  function normalize(s) {
+    s = s || {};
+    return { courses: Array.isArray(s.courses) ? s.courses : [], done: s.done || {}, todos: s.todos || {}, ddays: Array.isArray(s.ddays) ? s.ddays : [], notes: s.notes || {} };
+  }
+  const daysUntil = ds => Math.round((parse(ds) - parse(todayStr())) / 86400000);
+  const ddLabel = ds => { const n = daysUntil(ds); return n === 0 ? "D-Day" : n > 0 ? `D-${n}` : `D+${-n}`; };
+  const sortedDdays = () => (state.ddays || []).slice().sort((a, b) => a.date < b.date ? -1 : 1);
+  const daysUntilFrom = (a, b) => Math.round((parse(b) - parse(a)) / 86400000);
+  const nextDday = () => sortedDdays().find(d => d.date >= todayStr());
+
+  // ---------- render ----------
+  const $ = id => document.getElementById(id);
+  function renderAll() { renderDdays(); renderCalendar(); renderPanel(); renderCourses(); }
+
+  function renderDdays() {
+    const list = sortedDdays();
+    const t = todayStr();
+    // upcoming first, then past ones (at most 2 recent past)
+    const up = list.filter(d => d.date >= t), past = list.filter(d => d.date < t).slice(-2);
+    $("ddayBar").innerHTML = [...up, ...past].map(d => {
+      const n = daysUntil(d.date);
+      const cls = n < 0 ? "past" : n <= 14 ? "soon" : "";
+      return `<button class="dday ${cls}" data-act="dd-open" title="${fmtLong(d.date)}"><span class="nm">${esc(d.name)}</span><span class="cnt">${ddLabel(d.date)}</span></button>`;
+    }).join("") + `<button class="dday-add" data-act="dd-open">${list.length ? "D-day 관리" : "+ 시험일 D-day 추가"}</button>`;
+    // sheet list
+    $("ddList").innerHTML = list.length ? list.map(d => `<li><div class="t"><b>${esc(d.name)}</b><div class="muted" style="font-size:12px">${fmtLong(d.date)} · ${parse(d.date).getFullYear()}</div></div><span class="c">${ddLabel(d.date)}</span><button class="icon-btn" data-del-dd="${d.id}" aria-label="${esc(d.name)} 삭제">✕</button></li>`).join("")
+      : `<li class="empty-note" style="border:0;padding:4px 0">아직 D-day가 없어요. 시험일이나 마감일을 추가해 보세요.</li>`;
+  }
+
+  function renderCalendar() {
+    const y = viewMonth.getFullYear(), m = viewMonth.getMonth();
+    $("monthLabel").textContent = `${y}년 ${m + 1}월`;
+    const first = new Date(y, m, 1);
+    const start = addDays(first, -first.getDay());
+    const last = new Date(y, m + 1, 0);
+    const cells = Math.ceil((first.getDay() + last.getDate()) / 7) * 7;
+    const t = todayStr();
+    const byDate = {};
+    state.courses.forEach((c, ci) => c.lectures.forEach((l, i) => { const ds = c.sched[i]; if (ds) (byDate[ds] = byDate[ds] || []).push({ c, ci, i, l }); }));
+    const ddBy = {};
+    (state.ddays || []).forEach(x => (ddBy[x.date] = ddBy[x.date] || []).push(x));
+    let html = "";
+    for (let k = 0; k < cells; k++) {
+      const d = addDays(start, k), ds = ymd(d);
+      const items = byDate[ds] || [];
+      const todos = state.todos[ds] || [];
+      const dds = ddBy[ds] || [];
+      const cls = ["cell", d.getMonth() !== m && "other", ds === t && "today", ds === selected && "sel", d.getDay() === 0 && "sun", dds.length && "has-dd"].filter(Boolean).join(" ");
+      const ddHtml = dds.map(x => `<div class="dd-mark">★ ${esc(x.name)}</div>`).join("");
+      const shown = items.slice(0, 3).map(({ c, ci, i }) => {
+        const done = isDone(c, i), late = !done && ds < t;
+        return `<div class="lec${done ? " done" : ""}${late ? " late" : ""}" style="--cc:${colorOf(ci)}"><span>${esc(c.short)} ${i + 1}강</span></div>`;
+      }).join("");
+      const more = items.length > 3 ? `<div class="more">+${items.length - 3}개 더</div>` : "";
+      const dots = items.map(({ c, ci, i }) => `<i class="dot${isDone(c, i) ? " done" : ""}" style="--cc:${colorOf(ci)}"></i>`).join("");
+      const tLeft = todos.filter(x => !x.done).length;
+      const badge = todos.length ? `<span class="todo-badge num">✓${todos.length - tLeft}/${todos.length}</span>` : "";
+      html += `<button class="${cls}" data-date="${ds}" aria-label="${fmtLong(ds)}, 강의 ${items.length}개"><div class="d"><span class="n">${d.getDate()}</span>${badge}</div>${ddHtml}${shown}${more}<div class="dots">${dots}</div></button>`;
+    }
+    $("grid").innerHTML = html;
+  }
+
+  function renderPanel() {
+    const ds = selected, t = todayStr();
+    $("dayTitle").textContent = fmtLong(ds) + (ds === t ? " · 오늘" : "");
+    const nd = sortedDdays().find(x => x.date >= ds);
+    const dayDd = nd ? (nd.date === ds ? ` · ${nd.name} 당일` : ` · ${nd.name}까지 ${daysUntilFrom(ds, nd.date)}일`) : "";
+    const items = lecturesOn(ds);
+    const total = items.reduce((a, x) => a + (x.l.min || 0), 0);
+    const doneN = items.filter(x => isDone(x.c, x.i)).length;
+    $("dayMeta").textContent = (items.length ? `강의 ${items.length}개 · 총 ${total}분 · ${doneN}개 완료` : "배정된 강의가 없는 날이에요.") + dayDd;
+    $("lecCount").textContent = items.length ? `${doneN}/${items.length}` : "";
+
+    // late box (today only)
+    const late = ds === t ? lateLectures() : [];
+    $("lateBox").innerHTML = late.length
+      ? `<div class="late-box"><div><b>밀린 강의 ${late.length}개</b> <span class="muted">· 지난 날짜에 배정됐지만 아직 체크하지 않았어요.</span></div><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn sm" data-act="rebase-all">오늘부터 다시 배분</button></div></div>`
+      : "";
+
+    // extra rows: lectures reviewed on this date that weren't scheduled for it
+    const seen = new Set(items.map(x => x.c.id + ":" + x.i));
+    const extras = [];
+    state.courses.forEach((c, ci) => c.lectures.forEach((l, i) => {
+      const k = c.id + ":" + i;
+      if (seen.has(k)) return;
+      if ((state.notes?.[k]?.[ds]) || extraKeys.has(ds + "|" + k)) extras.push({ c, ci, i, l, extra: true });
+    }));
+    const rows = [...items, ...extras];
+    $("dayLecs").innerHTML = rows.length ? rows.map(row => lecRow(row, ds)).join("") : `<li class="empty-note">이 날은 쉬어도 돼요. 아래에 할 일만 적어 둘 수 있어요.</li>`;
+    const opts = state.courses.map(c => `<optgroup label="${esc(c.short)}">${c.lectures.map((l, i) => `<option value="${c.id}:${i}">${i + 1}강 · ${esc(l.title)}</option>`).join("")}</optgroup>`).join("");
+    $("pickWrap").innerHTML = state.courses.length ? `<select class="pick" id="reviewPick" aria-label="다른 강의 복습 노트 쓰기"><option value="">+ 다른 강의 복습 노트 쓰기</option>${opts}</select>` : "";
+
+    const todos = state.todos[ds] || [];
+    $("todoCount").textContent = todos.length ? `${todos.filter(x => x.done).length}/${todos.length}` : "";
+    $("dayTodos").innerHTML = todos.map(x => `<li class="${x.done ? "done" : ""}"><input type="checkbox" id="td-${x.id}" data-todo="${x.id}" ${x.done ? "checked" : ""}><label class="t" for="td-${x.id}"><div class="ttl">${esc(x.text)}</div></label><button class="icon-btn" data-del-todo="${x.id}" aria-label="삭제">✕</button></li>`).join("");
+  }
+
+  const openNotes = new Set();   // "date|cid:idx" with note box open
+  const extraKeys = new Set();   // "date|cid:idx" added via picker
+  function lecRow({ c, ci, i, l, extra }, ds) {
+    const done = isDone(c, i), k = c.id + ":" + i;
+    const hist = state.notes?.[k] || {};
+    const cur = hist[ds] || "";
+    const open = openNotes.has(ds + "|" + k);
+    const others = Object.keys(hist).filter(d => d !== ds).sort().reverse();
+    const nCount = Object.keys(hist).length;
+    const box = open ? `<div class="note-box">
+        <label class="lbl" for="note-${c.id}-${i}">${fmtLong(ds)} 복습한 내용</label>
+        <textarea id="note-${c.id}-${i}" data-note="${k}" placeholder="예: 도교법 제148조의2 음주측정거부 요건 정리, 위드마크 공식 판례 다시 볼 것">${esc(cur)}</textarea>
+        ${others.length ? `<div class="note-hist">${others.map(d => `<div><b>${fmtLong(d)}</b>${esc(hist[d])}</div>`).join("")}</div>` : ""}
+      </div>` : "";
+    return `<li class="${done ? "done" : ""}"><input type="checkbox" id="lec-${c.id}-${i}" data-course="${c.id}" data-idx="${i}" ${done ? "checked" : ""}><label class="t" for="lec-${c.id}-${i}"><div class="ttl">${i + 1}강 · ${esc(l.title)}</div><div class="sub"><span class="chip" style="--cc:${colorOf(ci)}">${esc(c.short)}</span> ${extra ? `<span class="chip" style="--cc:var(--muted)">복습</span> ` : ""}<span class="num">${l.min ? l.min + "분" : ""}</span></div></label><button class="note-btn${nCount ? " has" : ""}" data-note-toggle="${k}" aria-expanded="${open}">✎ 노트${nCount ? " " + nCount : ""}</button>${box}</li>`;
+  }
+
+  function courseStats(c) {
+    const n = c.lectures.length;
+    let doneN = 0, doneMin = 0, totalMin = 0, expected = 0, late = 0;
+    const t = todayStr();
+    c.lectures.forEach((l, i) => {
+      totalMin += l.min || 0;
+      if (isDone(c, i)) { doneN++; doneMin += l.min || 0; }
+      if (c.sched[i] && c.sched[i] <= t) expected++;
+      if (c.sched[i] && c.sched[i] < t && !isDone(c, i)) late++;
+    });
+    const end = c.sched.filter(Boolean).sort().pop();
+    return { n, doneN, doneMin, totalMin, expected, late, end };
+  }
+
+  function notionLine(c) {
+    if (!mcp || !notionReady()) return "";
+    const synced = ncfg?.synced?.[c.id];
+    const { create, update } = ncfg ? pendingNotion(c) : { create: c.lectures, update: [] };
+    const n = create.length + update.length;
+    const status = !synced ? "아직 노션 캘린더에 보내지 않았어요."
+      : n ? `노션 캘린더에 반영 안 된 변경 ${n}건`
+      : `노션 캘린더 최신 · ${fmtShort(synced.slice(0, 10))} 보냄`;
+    return `<div class="notion-row"><span id="nmsg-${c.id}" class="muted">${status}</span>
+      <span class="notion-acts">${ncfg?.dbUrl && synced ? `<a href="${esc(ncfg.dbUrl)}" target="_blank" rel="noopener">노션 열기 ↗</a>` : ""}
+      <button class="btn sm${synced && !n ? "" : " primary"}" data-act="notion-sync" data-id="${c.id}" ${synced && !n ? "disabled" : ""}>${synced ? "노션 일정 업데이트" : "노션 캘린더에 추가"}</button></span></div>`;
+  }
+
+  function renderNotionStatus() {
+    const el = $("notionStatus"); if (!el) return;
+    if (!mcp) { el.innerHTML = ""; return; }
+    if (notionReady()) {
+      el.innerHTML = `<span class="muted">노션 연결됨</span><a href="${esc(ncfg.rootUrl || notionUrl(ncfg.rootPageId))}" target="_blank" rel="noopener">내 노션 플래너 열기 ↗</a>`;
+    } else {
+      el.innerHTML = `<span class="muted" id="nconn-msg">일정과 복습 노트를 내 노션에도 남길 수 있어요.</span><button class="btn sm primary" data-act="notion-connect">내 노션 연결하기</button>`;
+    }
+  }
+
+  function renderCourses() {
+    renderNotionStatus();
+    const el = $("courseList");
+    if (!state.courses.length) {
+      el.innerHTML = `<div class="empty-courses"><h2>아직 등록한 강좌가 없어요</h2><p>인강 사이트의 강의구성 표를 드래그해 복사하고 붙여넣으면, 시작일과 하루 분량에 맞춰 강의가 달력에 날짜별로 배정돼요. 들은 강의는 체크하고, 밀리면 오늘부터 다시 배분할 수 있어요.</p><button class="btn primary" data-act="add-first">첫 강좌 추가하기</button></div>`;
+      return;
+    }
+    el.innerHTML = `<div class="course-list">${state.courses.map((c, ci) => {
+      const s = courseStats(c);
+      const pct = s.n ? s.doneN / s.n * 100 : 0;
+      const exp = s.n ? s.expected / s.n * 100 : 0;
+      const gap = s.late;
+      const status = s.doneN === s.n ? `<span class="chip" style="--cc:var(--ok)">완강</span>`
+        : gap > 0 ? `<span class="chip late">${gap}강 밀림</span>`
+        : `<span class="chip" style="--cc:var(--ok)">계획대로</span>`;
+      const per = c.mode === "min" ? `하루 ${c.per}분` : `하루 ${c.per}강`;
+      const days = (c.days || []).slice().sort().map(d => DOW[d]).join("");
+      return `<article class="course" style="--cc:${colorOf(ci)}">
+        <div class="row-h" style="align-items:flex-start"><div style="min-width:0"><div class="name">${esc(c.title)}</div>
+        <div class="src">${c.url ? `<a href="${esc(c.url)}" target="_blank" rel="noopener">강의 페이지 열기 ↗</a> · ` : ""}${per} · ${days}</div></div>${status}</div>
+        <div class="bar" title="진행 ${Math.round(pct)}% · 오늘까지 계획 ${Math.round(exp)}%"><i style="width:${pct}%"></i>${s.expected && s.expected < s.n ? `<b style="left:calc(${exp}% - 1px)"></b>` : ""}</div>
+        <div class="stats">
+          <div>들은 강의<strong>${s.doneN}/${s.n}</strong></div>
+          <div>들은 시간<strong>${Math.floor(s.doneMin / 60)}h ${s.doneMin % 60}m</strong></div>
+          <div>완강 예정<strong>${s.end ? fmtShort(s.end) : "-"}</strong></div>
+        </div>
+        ${(() => { const nd = nextDday(); if (!nd || !s.end || s.doneN === s.n) return ""; return s.end > nd.date
+          ? `<div class="warn-line">${esc(nd.name)}(${fmtShort(nd.date)})보다 ${daysUntilFrom(nd.date, s.end)}일 늦게 끝나요. 하루 분량을 늘려 보세요.</div>`
+          : `<div class="muted" style="font-size:12px">${esc(nd.name)} ${daysUntilFrom(s.end, nd.date)}일 전에 완강해요.</div>`; })()}
+        ${notionLine(c)}
+        <div class="acts">
+          <button class="btn sm" data-act="rebase" data-id="${c.id}">오늘부터 다시 배분</button>
+          <button class="btn sm" data-act="notes" data-id="${c.id}">복습 노트${(() => { const n = c.lectures.reduce((a, _, i) => a + Object.keys(state.notes?.[c.id + ":" + i] || {}).length, 0); return n ? " " + n : ""; })()}</button>
+          <button class="btn sm" data-act="edit" data-id="${c.id}">설정</button>
+          <button class="btn sm danger" data-act="delete" data-id="${c.id}">삭제</button>
+        </div>
+      </article>`;
+    }).join("")}</div>`;
+  }
+
+  // ---------- Notion ----------
+  const NOTION = "Notion";
+  let mcp = null, ncfg = null, ncfgRef = null, notionBusy = false;
+  const notionReady = () => !!(mcp && ncfg && ncfg.dataSourceId && ncfg.rootPageId);
+  const LSN = "lecture-planner-notion-v1";
+  async function saveCfg() {
+    if (!ncfg) return;
+    try { localStorage.setItem(LSN, JSON.stringify(ncfg)); } catch {}
+    if (ncfgRef) { try { await ncfgRef.set(ncfg); } catch {} }
+  }
+  async function connectNotion() {
+    if (notionBusy || !mcp) return;
+    notionBusy = true;
+    const say = (t, bad) => notionMsg("nconn-msg", t, bad);
+    const btn = document.querySelector("[data-act=notion-connect]"); if (btn) btn.disabled = true;
+    try {
+      say("노션에 플래너 페이지를 만드는 중…");
+      const r1 = await mcp.callTool(NOTION, "notion-create-pages", {
+        creation_mode: "draft", allow_async: false,
+        pages: [{ properties: { title: "인강 진도 플래너" }, icon: "📚",
+          content: "인강 진도 플래너 웹앱에서 보낸 강의 일정과 복습 노트가 모이는 곳이에요.\n\n- **인강 일정**: 강좌 카드의 \"노션 캘린더에 추가\"로 보낸 강의가 날짜별로 들어와요.\n- **복습 노트**: 복습 노트 창의 \"노션으로 보내기\"로 보낸 노트가 강좌별 페이지로 저장돼요." }]
+      });
+      const root = r1 && r1.payload && r1.payload.pages && r1.payload.pages[0];
+      const rootId = pageIdOf(root);
+      if (!rootId) throw { code: "tool_error", message: "페이지를 만들었다는 응답을 받지 못했어요" };
+      ncfg = { rootPageId: rootId, rootUrl: root.url || notionUrl(rootId), rows: {}, notePages: {}, synced: {} };
+      await saveCfg();
+      say("일정 캘린더를 만드는 중…");
+      const r2 = await mcp.callTool(NOTION, "notion-create-database", {
+        parent: { type: "page_id", page_id: rootId }, title: "인강 일정",
+        description: "인강 진도 플래너 웹앱에서 보낸 강의별 수강 일정",
+        schema: "CREATE TABLE (\"강의\" TITLE, \"날짜\" DATE, \"강좌\" RICH_TEXT, \"회차\" NUMBER, \"강의시간(분)\" NUMBER, \"완료\" CHECKBOX, \"플래너키\" RICH_TEXT)"
+      });
+      const txt = JSON.stringify(r2 && (r2.payload ?? r2.content));
+      const ds = (txt.match(/collection:\/\/([0-9a-f-]{36})/) || [])[1];
+      const dbId = (txt.match(/notion\.(?:com|so)\/(?:p\/)?([0-9a-f]{32})/) || [])[1];
+      if (!ds) throw { code: "tool_error", message: "일정 데이터베이스 정보를 읽지 못했어요" };
+      ncfg.dataSourceId = ds; ncfg.dbUrl = dbId ? notionUrl(dbId) : ncfg.rootUrl;
+      await saveCfg();
+      if (dbId) {
+        say("캘린더 보기를 붙이는 중…");
+        try {
+          await mcp.callTool(NOTION, "notion-create-view", { database_id: dbId, data_source_id: "collection://" + ds, name: "캘린더", type: "calendar", configure: "CALENDAR BY \"날짜\"; SHOW \"강의\", \"강좌\", \"완료\"" });
+        } catch {}
+      }
+      notionBusy = false; renderCourses();
+      toast("내 노션에 '인강 진도 플래너' 페이지를 만들었어요");
+    } catch (e) {
+      notionBusy = false; renderCourses();
+      notionMsg("nconn-msg", notionErr(e), true);
+    }
+  }
+  const pageIdOf = p => p && (p.id || ((p.url || "").match(/[0-9a-f]{32}/) || [])[0]);
+  const notionUrl = id => `https://www.notion.so/${String(id).replace(/-/g, "")}`;
+  function notionErr(e) {
+    switch (e && e.code) {
+      case "needs_reauth": return "노션 연결이 만료됐어요. claude.ai 설정 → 커넥터에서 노션을 다시 연결해 주세요.";
+      case "server_not_connected": case "selection_required": case "server_not_found": return "노션 커넥터를 찾지 못했어요. claude.ai 설정 → 커넥터에서 노션을 연결해 주세요.";
+      case "not_in_manifest": case "approval_required": case "consent_required": return "이 페이지가 노션을 쓰려면 허용이 필요해요. 다시 눌러 뜨는 창에서 허용해 주세요.";
+      case "blocked_by_policy": return "조직 정책으로 이 페이지에서 노션을 쓸 수 없어요.";
+      case "tool_error": return "노션이 요청을 처리하지 못했어요: " + String(e.message || "").slice(0, 140);
+      case "server_unavailable": case "upstream_error": case "rate_limited": return "노션이 응답하지 않았어요. 일부는 이미 들어갔을 수 있어요. 잠시 뒤 다시 눌러 주세요.";
+      default: return "이 화면에서는 노션 연결을 쓸 수 없어요. claude.ai에서 열어 주세요.";
+    }
+  }
+  function pendingNotion(c) {
+    const rows = ncfg?.rows || {}, create = [], update = [];
+    c.lectures.forEach((l, i) => {
+      const k = c.id + ":" + i, date = c.sched[i]; if (!date) return;
+      const done = isDone(c, i), r = rows[k];
+      if (!r) create.push({ k, i, l, date, done });
+      else if (r.date !== date || r.done !== done) update.push({ k, i, l, date, done, id: r.id });
+    });
+    return { create, update };
+  }
+  function notionMsg(id, text, bad) {
+    const el = document.getElementById(id); if (!el) return;
+    el.textContent = text; el.style.color = bad ? "var(--late)" : "";
+  }
+  async function syncCourse(c) {
+    if (notionBusy) return;
+    if (!mcp) { toast("이 화면에서는 노션 연결을 쓸 수 없어요"); return; }
+    if (!ncfg?.dataSourceId) { toast("노션 캘린더 정보를 찾지 못했어요"); return; }
+    const msgId = "nmsg-" + c.id;
+    const { create, update } = pendingNotion(c);
+    if (!create.length && !update.length) { notionMsg(msgId, "노션 캘린더가 이미 최신이에요."); return; }
+    notionBusy = true; ncfg.rows = ncfg.rows || {};
+    const total = create.length + update.length; let doneN = 0, missing = 0;
+    notionMsg(msgId, `노션에 보내는 중… 0/${total}`);
+    try {
+      for (let s = 0; s < create.length; s += 100) {
+        const chunk = create.slice(s, s + 100);
+        const res = await mcp.callTool(NOTION, "notion-create-pages", {
+          parent: { type: "data_source_id", data_source_id: ncfg.dataSourceId },
+          allow_async: false,
+          pages: chunk.map(x => ({ properties: {
+            "강의": `${c.short} ${x.i + 1}강 · ${x.l.title}`,
+            "date:날짜:start": x.date, "date:날짜:is_datetime": 0,
+            "강좌": c.short, "회차": x.i + 1, "강의시간(분)": x.l.min || 0,
+            "완료": x.done ? "__YES__" : "__NO__", "플래너키": x.k } }))
+        });
+        const pages = (res && res.payload && res.payload.pages) || [];
+        chunk.forEach((x, j) => { const id = pageIdOf(pages[j]); if (id) ncfg.rows[x.k] = { id, date: x.date, done: x.done }; });
+        doneN += chunk.length; await saveCfg();
+        notionMsg(msgId, `노션에 보내는 중… ${doneN}/${total}`);
+      }
+      for (const x of update) {
+        try {
+          await mcp.callTool(NOTION, "notion-update-page", {
+            page_id: x.id, command: "update_properties", allow_async: false,
+            properties: { "date:날짜:start": x.date, "date:날짜:is_datetime": 0, "완료": x.done ? "__YES__" : "__NO__" }
+          });
+          ncfg.rows[x.k] = { id: x.id, date: x.date, done: x.done };
+        } catch (e) {
+          if (e && e.code === "tool_error") { delete ncfg.rows[x.k]; missing++; } else throw e;
+        }
+        doneN++; notionMsg(msgId, `노션에 보내는 중… ${doneN}/${total}`);
+      }
+      ncfg.synced = ncfg.synced || {}; ncfg.synced[c.id] = new Date().toISOString();
+      await saveCfg();
+      notionBusy = false; renderCourses();
+      toast(missing ? `노션에서 지워진 일정 ${missing}개가 있어요. 한 번 더 누르면 새로 만들어요` : `노션 캘린더에 ${total}건을 반영했어요`);
+    } catch (e) {
+      await saveCfg(); notionBusy = false; renderCourses();
+      notionMsg(msgId, notionErr(e), true);
+    }
+  }
+  function notesMarkdown(c) {
+    const clean = s => String(s).replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    const para = t => clean(t).split(/\r?\n/).map(l => l.trim()).filter(Boolean).map(l => l.replace(/^([#>\-*+|]|\d+\.)/, "\\$1")).join("\n\n");
+    const parts = [];
+    c.lectures.forEach((l, i) => {
+      const h = state.notes?.[c.id + ":" + i]; if (!h) return;
+      parts.push(`## ${i + 1}강 · ${clean(l.title)}`);
+      Object.keys(h).sort().forEach(d => parts.push(`### <date start="${d}" />`, para(h[d])));
+    });
+    if (!parts.length) return "";
+    return [`<callout icon="📚" color="gray_bg">\n인강 진도 플래너에서 보낸 복습 노트예요. 마지막으로 보낸 날: <date start="${todayStr()}" />\n</callout>`, ...parts].join("\n\n");
+  }
+  async function sendNotes(c) {
+    if (notionBusy) return;
+    const out = "nnote-msg";
+    if (!mcp) { notionMsg(out, "이 화면에서는 노션 연결을 쓸 수 없어요.", true); return; }
+    if (!ncfg?.rootPageId) { notionMsg(out, "노션 플래너 페이지 정보를 찾지 못했어요.", true); return; }
+    const md = notesMarkdown(c);
+    if (!md) { notionMsg(out, "보낼 복습 노트가 아직 없어요.", true); return; }
+    if (new Blob([md]).size > 90000) { notionMsg(out, "노트가 너무 길어서 한 번에 보낼 수 없어요.", true); return; }
+    notionBusy = true; notionMsg(out, "노션으로 보내는 중…");
+    ncfg.notePages = ncfg.notePages || {};
+    try {
+      let np = ncfg.notePages[c.id];
+      if (np) {
+        try {
+          await mcp.callTool(NOTION, "notion-update-page", { page_id: np.id, command: "replace_content", new_str: md, allow_async: false });
+        } catch (e) { if (e && e.code === "tool_error") np = null; else throw e; }
+      }
+      if (!np) {
+        const res = await mcp.callTool(NOTION, "notion-create-pages", {
+          parent: { type: "page_id", page_id: ncfg.rootPageId }, allow_async: false,
+          pages: [{ properties: { title: `${c.short} 복습 노트` }, icon: "📝", content: md }]
+        });
+        const p = res && res.payload && res.payload.pages && res.payload.pages[0];
+        const id = pageIdOf(p);
+        if (id) { np = { id, url: p.url || notionUrl(id) }; ncfg.notePages[c.id] = np; }
+      }
+      np && (np.sent = new Date().toISOString());
+      await saveCfg(); notionBusy = false;
+      renderNotesFooter(c);
+      notionMsg(out, "노션에 저장했어요. 다시 보내면 최신 노트로 바뀌어요.");
+    } catch (e) {
+      await saveCfg(); notionBusy = false; notionMsg(out, notionErr(e), true);
+    }
+  }
+  let notesCourseId = null;
+  function renderNotesFooter(c) {
+    if (!mcp) { $("notesFoot").innerHTML = ""; $("notesFoot").hidden = true; return; }
+    $("notesFoot").hidden = false;
+    if (!notionReady()) { $("notesFoot").innerHTML = `<span class="muted" style="font-size:12.5px">노트를 노션에 남기려면 '강좌별 진도' 옆의 <b>내 노션 연결하기</b>를 먼저 눌러 주세요.</span>`; return; }
+    const np = ncfg?.notePages?.[c.id];
+    $("notesFoot").innerHTML = `<span class="muted" id="nnote-msg" style="font-size:12.5px;flex:1;min-width:0">${np ? `마지막으로 보낸 때 ${np.sent ? fmtShort(np.sent.slice(0, 10)) : "-"}` : "오래 남기고 싶은 노트는 노션 페이지로 보내 두세요."}</span>
+      ${np ? `<a class="btn" href="${esc(np.url || notionUrl(np.id))}" target="_blank" rel="noopener">노션에서 보기 ↗</a>` : ""}
+      <button class="btn primary" type="button" data-act="send-notes">${np ? "노션 페이지 업데이트" : "노션으로 보내기"}</button>`;
+  }
+
+  // ---------- toast / confirm ----------
+  let toastT;
+  function toast(msg) { const t = $("toast"); t.textContent = msg; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => t.hidden = true, 2200); }
+  function confirmBox(msg, yesLabel = "확인") {
+    return new Promise(res => {
+      $("confirmMsg").textContent = msg; $("confirmYes").textContent = yesLabel; $("confirmWrap").hidden = false;
+      const done = v => { $("confirmWrap").hidden = true; $("confirmYes").onclick = $("confirmNo").onclick = null; res(v); };
+      $("confirmYes").onclick = () => done(true); $("confirmNo").onclick = () => done(false);
+    });
+  }
+
+  // ---------- course sheet ----------
+  let editing = null, mode = "count", loadedLectures = null;
+  function openSheet(course) {
+    editing = course || null;
+    $("sheetTitle").textContent = course ? "강좌 설정" : "강좌 추가";
+    $("sheetSave").textContent = course ? "저장하고 다시 배분" : "달력에 배분하기";
+    $("pasteGuide").hidden = !!course;
+    $("fTitle").value = course?.title || "";
+    $("fShort").value = course?.short || "";
+    $("fToc").value = course ? course.lectures.map((l, i) => `${i + 1}\t${l.title}\t${l.min}분`).join("\n") : "";
+    $("fStart").value = course?.start || todayStr();
+    setMode(course?.mode || "count");
+    $("fPer").value = course?.per || (course?.mode === "min" ? 120 : 2);
+    const days = course?.days || [1, 2, 3, 4, 5, 6];
+    $("fDays").innerHTML = DOW.map((n, d) => `<label><input type="checkbox" value="${d}" ${days.includes(d) ? "checked" : ""}><span>${n}</span></label>`).join("");
+    updatePreview();
+    $("sheetWrap").hidden = false;
+    setTimeout(() => (course ? $("fTitle") : $("fToc")).focus(), 30);
+  }
+  function closeSheet() { $("sheetWrap").hidden = true; }
+  function setMode(m) {
+    mode = m;
+    $("mCount").setAttribute("aria-pressed", m === "count");
+    $("mMin").setAttribute("aria-pressed", m === "min");
+    $("perUnit").textContent = m === "min" ? "분" : "강";
+  }
+  function sheetDays() { return [...$("fDays").querySelectorAll("input:checked")].map(x => +x.value); }
+  function updatePreview() {
+    const lecs = parseToc($("fToc").value);
+    if (!lecs.length) { $("tocPreview").innerHTML = ""; $("planHint").innerHTML = ""; return; }
+    const total = lecs.reduce((a, l) => a + l.min, 0);
+    $("tocPreview").innerHTML = `<div class="hint good">목차 ${lecs.length}강 · 총 ${Math.floor(total / 60)}시간 ${total % 60}분을 읽었어요.</div>
+      <div class="preview"><table>${lecs.map((l, i) => `<tr><td>${i + 1}</td><td>${esc(l.title)}</td><td>${l.min ? l.min + "분" : "-"}</td></tr>`).join("")}</table></div>`;
+    const days = sheetDays();
+    const per = Math.max(1, +$("fPer").value || 1);
+    if (!days.length) { $("planHint").innerHTML = `<div class="hint warn">수강할 요일을 하나 이상 골라 주세요.</div>`; return; }
+    const fake = { id: "_", lectures: lecs, mode, per, days, sched: [] };
+    const saveDone = state.done._; delete state.done._;
+    const s = plan(fake, $("fStart").value || todayStr());
+    if (saveDone) state.done._ = saveDone;
+    const end = s[s.length - 1];
+    const studyDays = new Set(s).size;
+    $("planHint").innerHTML = `<div class="hint">공부하는 날 <b class="num">${studyDays}일</b> 동안 들으면 <b>${fmtLong(end)}</b>에 완강해요.</div>`;
+  }
+  function saveSheet() {
+    const lecs = parseToc($("fToc").value);
+    if (!lecs.length) { toast("강의 목차를 붙여넣어 주세요"); $("fToc").focus(); return; }
+    const days = sheetDays();
+    if (!days.length) { toast("수강할 요일을 골라 주세요"); return; }
+    const title = $("fTitle").value.trim() || "이름 없는 강좌";
+    const base = {
+      title, short: $("fShort").value.trim() || shortName(title), url: editing?.url || "",
+      lectures: lecs, start: $("fStart").value || todayStr(), mode, per: Math.max(1, +$("fPer").value || 1), days
+    };
+    if (editing) {
+      Object.assign(editing, base);
+      const d = state.done[editing.id] || {};
+      Object.keys(d).forEach(k => { if (+k >= lecs.length) delete d[k]; });
+      editing.sched = [];
+      // done lectures keep their check; remaining are re-laid from the later of start / today
+      const from = base.start > todayStr() ? base.start : todayStr();
+      editing.sched = plan(editing, Object.keys(d).length ? from : base.start);
+      lecs.forEach((_, i) => { if (d[i] && !editing.sched[i]) editing.sched[i] = d[i]; });
+      toast("설정을 저장하고 다시 배분했어요");
+    } else {
+      const used = new Set(state.courses.map(c => c.color));
+      let color = 0; while (used.has(color) && color < 6) color++;
+      const c = { id: uid(), color: color % 6, ...base, sched: [] };
+      c.sched = plan(c, c.start);
+      state.courses.push(c);
+      selected = c.start; viewMonth = parse(c.start); viewMonth.setDate(1);
+      toast(`${lecs.length}강을 달력에 배분했어요`);
+    }
+    closeSheet(); save(); renderAll();
+  }
+
+  // ---------- events ----------
+  $("grid").addEventListener("click", e => {
+    const b = e.target.closest(".cell"); if (!b) return;
+    selected = b.dataset.date;
+    const d = parse(selected);
+    if (d.getMonth() !== viewMonth.getMonth()) { viewMonth = new Date(d.getFullYear(), d.getMonth(), 1); }
+    renderCalendar(); renderPanel();
+    if (window.matchMedia("(max-width:900px)").matches) $("panel").scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+  $("prevM").onclick = () => { viewMonth.setMonth(viewMonth.getMonth() - 1); renderCalendar(); };
+  $("nextM").onclick = () => { viewMonth.setMonth(viewMonth.getMonth() + 1); renderCalendar(); };
+  $("todayBtn").onclick = () => { selected = todayStr(); viewMonth = new Date(); viewMonth.setDate(1); renderAll(); };
+
+  $("panel").addEventListener("change", e => {
+    const t = e.target;
+    if (t.dataset.course) {
+      const map = state.done[t.dataset.course] = state.done[t.dataset.course] || {};
+      if (t.checked) map[t.dataset.idx] = todayStr(); else delete map[t.dataset.idx];
+      save(); renderAll();
+    } else if (t.dataset.todo) {
+      const x = (state.todos[selected] || []).find(x => x.id === t.dataset.todo);
+      if (x) { x.done = t.checked; save(); renderAll(); }
+    }
+  });
+  $("panel").addEventListener("input", e => {
+    const t = e.target;
+    if (!t.dataset.note) return;
+    const k = t.dataset.note;
+    const m = state.notes[k] = state.notes[k] || {};
+    if (t.value.trim()) m[selected] = t.value; else delete m[selected];
+    if (!Object.keys(m).length) delete state.notes[k];
+    const btn = t.closest("li").querySelector("[data-note-toggle]");
+    const n = Object.keys(state.notes[k] || {}).length;
+    btn.classList.toggle("has", n > 0); btn.textContent = "✎ 노트" + (n ? " " + n : "");
+    save();
+  });
+  $("panel").addEventListener("change", e => {
+    if (e.target.id !== "reviewPick" || !e.target.value) return;
+    const k = e.target.value;
+    extraKeys.add(selected + "|" + k); openNotes.add(selected + "|" + k);
+    renderPanel();
+    const ta = document.querySelector(`[data-note="${k}"]`); if (ta) { ta.focus(); ta.scrollIntoView({ block: "nearest" }); }
+  });
+  $("panel").addEventListener("click", async e => {
+    const tg = e.target.closest("[data-note-toggle]");
+    if (tg) {
+      const key = selected + "|" + tg.dataset.noteToggle;
+      if (openNotes.has(key)) openNotes.delete(key); else openNotes.add(key);
+      renderPanel();
+      if (openNotes.has(key)) { const ta = document.querySelector(`[data-note="${tg.dataset.noteToggle}"]`); if (ta) ta.focus(); }
+      return;
+    }
+    const del = e.target.closest("[data-del-todo]");
+    if (del) {
+      state.todos[selected] = (state.todos[selected] || []).filter(x => x.id !== del.dataset.delTodo);
+      if (!state.todos[selected].length) delete state.todos[selected];
+      save(); renderAll(); return;
+    }
+    if (e.target.closest("[data-act=rebase-all]")) {
+      const t = todayStr();
+      state.courses.forEach(c => { if (c.lectures.some((_, i) => c.sched[i] < t && !isDone(c, i))) c.sched = plan(c, t); });
+      save(); renderAll(); toast("밀린 강의를 오늘부터 다시 배분했어요");
+    }
+  });
+  $("todoForm").addEventListener("submit", e => {
+    e.preventDefault();
+    const v = $("todoInput").value.trim(); if (!v) return;
+    (state.todos[selected] = state.todos[selected] || []).push({ id: uid(), text: v, done: false });
+    $("todoInput").value = ""; save(); renderAll(); $("todoInput").focus();
+  });
+
+  $("courseList").addEventListener("click", async e => {
+    const b = e.target.closest("[data-act]"); if (!b) return;
+    const c = state.courses.find(x => x.id === b.dataset.id);
+    if (b.dataset.act === "add-first") openSheet(null);
+    if (b.dataset.act === "edit" && c) openSheet(c);
+    if (b.dataset.act === "notes" && c) {
+      $("notesTitle").textContent = `${c.short} 복습 노트`;
+      const secs = c.lectures.map((l, i) => {
+        const h = state.notes?.[c.id + ":" + i]; if (!h) return "";
+        const ds = Object.keys(h).sort();
+        return `<section><h3>${i + 1}강 · ${esc(l.title)}</h3><div class="note-hist">${ds.map(d => `<div><b>${fmtLong(d)} · ${parse(d).getFullYear()}</b>${esc(h[d])}</div>`).join("")}</div></section>`;
+      }).join("");
+      $("notesAll").innerHTML = secs || `<p class="empty-note" style="margin:0">아직 쓴 복습 노트가 없어요. 달력에서 날짜를 고른 뒤 강의 옆 <b>✎ 노트</b>를 눌러 그날 복습한 내용을 적어 보세요.</p>`;
+      notesCourseId = c.id; renderNotesFooter(c);
+      $("notesWrap").hidden = false;
+    }
+    if (b.dataset.act === "notion-sync" && c) syncCourse(c);
+    if (b.dataset.act === "rebase" && c) {
+      const t = todayStr();
+      c.sched = plan(c, c.start > t ? c.start : t);
+      save(); renderAll(); toast("남은 강의를 다시 배분했어요");
+    }
+    if (b.dataset.act === "delete" && c) {
+      if (await confirmBox(`'${c.short}' 강좌와 수강 체크 기록을 삭제할까요? 할 일 목록은 그대로 남아요.`, "삭제")) {
+        state.courses = state.courses.filter(x => x !== c); delete state.done[c.id];
+        Object.keys(state.notes || {}).forEach(k => { if (k.startsWith(c.id + ":")) delete state.notes[k]; });
+        save(); renderAll(); toast("강좌를 삭제했어요");
+      }
+    }
+  });
+
+  // D-day
+  const openDd = () => { $("ddDate").value = ""; $("ddName").value = ""; renderDdays(); $("ddWrap").hidden = false; setTimeout(() => $("ddName").focus(), 30); };
+  $("ddayBar").addEventListener("click", e => { if (e.target.closest("[data-act=dd-open]")) openDd(); });
+  $("ddClose").onclick = () => { $("ddWrap").hidden = true; };
+  $("notesClose").onclick = () => { $("notesWrap").hidden = true; };
+  $("notionStatus").addEventListener("click", e => { if (e.target.closest("[data-act=notion-connect]")) connectNotion(); });
+  $("notesFoot").addEventListener("click", e => {
+    if (!e.target.closest("[data-act=send-notes]")) return;
+    const c = state.courses.find(x => x.id === notesCourseId); if (c) sendNotes(c);
+  });
+  $("ddForm").addEventListener("submit", e => {
+    e.preventDefault();
+    const name = $("ddName").value.trim(), date = $("ddDate").value;
+    if (!name) { toast("D-day 이름을 적어 주세요"); $("ddName").focus(); return; }
+    if (!date) { toast("날짜를 골라 주세요"); $("ddDate").focus(); return; }
+    state.ddays = state.ddays || [];
+    state.ddays.push({ id: uid(), name, date });
+    $("ddName").value = ""; $("ddDate").value = "";
+    save(); renderAll(); toast(`${name} ${ddLabel(date)}`);
+  });
+  $("ddList").addEventListener("click", e => {
+    const b = e.target.closest("[data-del-dd]"); if (!b) return;
+    state.ddays = (state.ddays || []).filter(x => x.id !== b.dataset.delDd);
+    save(); renderAll();
+  });
+
+  $("addCourseBtn").onclick = () => openSheet(null);
+  $("sheetClose").onclick = $("sheetCancel").onclick = closeSheet;
+  $("sheetSave").onclick = saveSheet;
+  $("fToc").addEventListener("input", updatePreview);
+  $("fStart").addEventListener("change", updatePreview);
+  $("fPer").addEventListener("input", updatePreview);
+  $("fDays").addEventListener("change", updatePreview);
+  $("mCount").onclick = () => { setMode("count"); if (+$("fPer").value > 10) $("fPer").value = 2; updatePreview(); };
+  $("mMin").onclick = () => { setMode("min"); if (+$("fPer").value < 20) $("fPer").value = 120; updatePreview(); };
+  document.addEventListener("keydown", e => {
+    if (e.key !== "Escape") return;
+    if (!$("sheetWrap").hidden) closeSheet();
+    if (!$("ddWrap").hidden) $("ddWrap").hidden = true;
+    if (!$("notesWrap").hidden) $("notesWrap").hidden = true;
+  });
+
+  // ---------- backup (standalone copy only: inside claude.ai the account keeps the records) ----------
+  if (!window.claude) {
+    $("backupBox").hidden = false;
+    $("backupBtn").onclick = () => {
+      const blob = new Blob([JSON.stringify({ app: "lecture-planner", v: 1, savedAt: new Date().toISOString(), data: state }, null, 1)], { type: "application/json" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob); a.download = `인강플래너-백업-${todayStr()}.json`;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+      toast("백업 파일을 저장했어요");
+    };
+    $("restoreFile").addEventListener("change", async e => {
+      const f = e.target.files && e.target.files[0]; e.target.value = "";
+      if (!f) return;
+      try {
+        const j = JSON.parse(await f.text());
+        const data = j && j.app === "lecture-planner" ? j.data : j;
+        if (!data || !Array.isArray(data.courses)) throw 0;
+        if (!(await confirmBox(`지금 기록을 '${f.name}'의 내용으로 바꿀까요? 강좌 ${data.courses.length}개가 들어 있어요.`, "불러오기"))) return;
+        state = normalize(data); save(); renderAll(); toast("백업을 불러왔어요");
+      } catch { toast("인강 플래너 백업 파일이 아니에요"); }
+    });
+  }
+
+  // keep the latest edit if the page is closed or backgrounded before the debounced save runs
+  const flushLocal = () => { if (dirty) { try { localStorage.setItem(LS, JSON.stringify(state)); } catch {} clearTimeout(saveTimer); flush(); } };
+  window.addEventListener("pagehide", flushLocal);
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") flushLocal(); });
+
+  // ---------- boot ----------
+  loadLocal();
+  renderAll();
+  setSaveState("");
+
+  (async () => {
+    if (!window.claude || !window.claude.use) { setSaveState("이 브라우저에 저장됨"); return; }
+    try { const s = localStorage.getItem(LSN); if (s && !ncfg) ncfg = JSON.parse(s); } catch {}
+    claude.use("mcp").then(m => { mcp = m; renderCourses(); }).catch(() => {});
+    try {
+      const [d, u] = await Promise.all([claude.use("db"), claude.use("user")]);
+      db = d;
+      const id = u ? await u.id() : null;
+      if (db && id) {
+        ncfgRef = db.doc("data/users/" + id + "/notion");
+        ncfgRef.get().then(s => { if (s.exists) { ncfg = JSON.parse(JSON.stringify(s.data())); renderCourses(); } }).catch(() => {});
+        docRef = db.doc("data/users/" + id + "/planner");
+        docRef.onSnapshot(snap => {
+          if (snap.metadata.hasPendingWrites || dirty || saving) return;
+          if (snap.exists) {
+            const remote = normalize(snap.data().data);
+            if (JSON.stringify(remote) !== JSON.stringify(state)) { state = remote; renderAll(); }
+            setSaveState("저장됨");
+          } else if (state.courses.length || Object.keys(state.todos).length || (state.ddays || []).length || Object.keys(state.notes || {}).length) {
+            save(); // first sync: push local data up
+          } else setSaveState("");
+        }, () => setSaveState("동기화가 끊겼어요 · 이 기기에 저장 중"));
+      } else setSaveState("이 브라우저에 저장됨");
+    } catch { setSaveState("이 브라우저에 저장됨"); }
+  })();
+})();
+</script>
+</body>
+</html>
